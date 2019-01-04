@@ -28,6 +28,23 @@ function relPath (str) {
   );
 }
 
+function execAndRetry(command, attempt = 1) {
+  try {
+    cy.exec(command, {
+      log: false,
+      timeout: 10000
+    });
+  } catch (e) {
+    console.warn(`Exec Failures: '${command}' on attempt #${attempt}`, e);
+    if (attempt <= 3) {
+      execAndRetry(command, ++attempt);
+    } else {
+      console.warn(`Exec Failure: Giving up on ${command}`);
+      throw e;
+    }
+  }
+}
+
 /**
  * Takes a screenshot and, if available, matches it against the screenshot
  * from the previous test run. Assertion will fail if the diff is larger than
@@ -41,8 +58,8 @@ function matchScreenshot (name, options = {}) {
   console.log('Taking screenshot');
 
   // Ensure that the screenshot folders exist
-  cy.exec(`mkdir -p ${cypressPaths.SCREENSHOT_FOLDER}/new`, { log: false });
-  cy.exec(`mkdir -p ${cypressPaths.SCREENSHOT_FOLDER}/diff`, { log: false });
+  execAndRetry(`mkdir -p ${cypressPaths.SCREENSHOT_FOLDER}/new`);
+  execAndRetry(`mkdir -p ${cypressPaths.SCREENSHOT_FOLDER}/diff`);
 
   // we need to touch the old file for the first run,
   // we'll check later if the file actually has any content
