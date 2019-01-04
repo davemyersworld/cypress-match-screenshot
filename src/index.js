@@ -64,9 +64,7 @@ function matchScreenshot (name, options = {}) {
   // we need to touch the old file for the first run,
   // we'll check later if the file actually has any content
   // in it or not
-  cy.exec(`touch "${cypressPaths.SCREENSHOT_FOLDER}/${fileName}.png"`, {
-    log: false
-  });
+  execAndRetry(`touch "${cypressPaths.SCREENSHOT_FOLDER}/${fileName}.png"`);
 
   const id = uuid();
   let path = null;
@@ -85,9 +83,7 @@ function matchScreenshot (name, options = {}) {
       const oldPath = `${cypressPaths.SCREENSHOT_FOLDER}/${fileName}.png`;
       const newPath = `${cypressPaths.SCREENSHOT_FOLDER}/new/${fileName}.png`;
 
-      cy.exec(`mv "${path}" "${newPath}"`, {
-        log: false
-      });
+      execAndRetry(`mv "${path}" "${newPath}"`);
 
       cy.log('Screenshot taken');
       cy
@@ -97,28 +93,24 @@ function matchScreenshot (name, options = {}) {
         .then((value) => {
           if (value) {
             cy.log('Matching screenshot...');
-            cy
-              .exec(
+            execAndRetry(
                 `cypress-diff-screenshot ` +
                   `--pathOld="${relPath(`${fileName}.png`)}" ` +
                   `--pathNew="${relPath(`new/${fileName}.png`)}" ` +
                   `--target="${relPath(`diff/${fileName}.png`)}" ` +
                   `--threshold=${options.threshold || '0.005'} ` +
-                  `--thresholdType=${options.thresholdType || ''} `,
-                { log: false }
+                  `--thresholdType=${options.thresholdType || ''} `
               )
               .then((result) => {
                 console.log(`Matched screenshot - Passed: ${result.stdout}`);
                 const matches = result.stdout === 'Yay';
                 if (Cypress.config('updateScreenshots') || matches) {
-                  cy.exec(
+                  execAndRetry(
                     `mv "${cypressPaths.SCREENSHOT_FOLDER}/new/${fileName}.png" ` +
-                      `"${cypressPaths.SCREENSHOT_FOLDER}/${fileName}.png"`,
-                    { log: false }
+                      `"${cypressPaths.SCREENSHOT_FOLDER}/${fileName}.png"`
                   );
-                  cy.exec(
-                    `rm "${cypressPaths.SCREENSHOT_FOLDER}/diff/${fileName}.png"`,
-                    { log: false }
+                  execAndRetry(
+                    `rm "${cypressPaths.SCREENSHOT_FOLDER}/diff/${fileName}.png"`
                   );
                 }
                 if (!Cypress.config('updateScreenshots')) {
@@ -127,10 +119,9 @@ function matchScreenshot (name, options = {}) {
               });
           } else {
             cy.log('No previous screenshot found to match against!');
-            cy.exec(
+            execAndRetry(
               `mv "${cypressPaths.SCREENSHOT_FOLDER}/new/${fileName}.png" ` +
-                `"${cypressPaths.SCREENSHOT_FOLDER}/${fileName}.png"`,
-              { log: false }
+                `"${cypressPaths.SCREENSHOT_FOLDER}/${fileName}.png"`
             );
           }
         });
