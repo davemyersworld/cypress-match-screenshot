@@ -30,14 +30,14 @@ function relPath (str) {
 
 function execAndRetry(command, attempt = 1) {
   try {
-    cy.exec(command, {
+    return cy.exec(command, {
       log: false,
       timeout: 10000
     });
   } catch (e) {
     console.warn(`Exec Failures: '${command}' on attempt #${attempt}`, e);
     if (attempt <= 3) {
-      execAndRetry(command, ++attempt);
+      return execAndRetry(command, ++attempt);
     } else {
       console.warn(`Exec Failure: Giving up on ${command}`);
       throw e;
