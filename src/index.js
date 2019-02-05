@@ -29,20 +29,19 @@ function relPath (str) {
 }
 
 function execAndRetry(command, attempt = 1) {
-  try {
-    return cy.exec(command, {
-      log: false,
-      timeout: 10000
-    });
-  } catch (e) {
-    console.warn(`Exec Failures: '${command}' on attempt #${attempt}`, e);
+  const response = cy.exec(command, {
+    log: false,
+    timeout: 10000,
+    failOnNonZeroExit: false
+  });
+  if(response.code) {
     if (attempt <= 3) {
-      return execAndRetry(command, ++attempt);
+      return execAndRetry(command, attempt);
     } else {
-      console.warn(`Exec Failure: Giving up on ${command}`);
-      throw e;
+      throw new Error(`Unable to exec ${command}`);
     }
   }
+  return response;
 }
 
 /**
